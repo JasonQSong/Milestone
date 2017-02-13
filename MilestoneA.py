@@ -67,7 +67,7 @@ def parse_keywords(article, replacement_words, noise_words):
     LOG.debug('Tokens: %s', tokens)
     # Rule3: find out stem for verbs
     # Rule4: filter out mini words
-    keywords = [parse_stem(w) for w in tokens if len(w) > 2]
+    keywords = [parse_stem(verb=w) for w in tokens if len(w) > 2]
     LOG.debug('Parsed keywords: %s', keywords)
     # Rule1: delete noise words
     return list(sorted(set(keywords) - set(noise_words)))
