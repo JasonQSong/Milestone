@@ -1,27 +1,23 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-# Yin Yi -- yyi1
-# Xiao Song -- xiaos1
-# Date Created: 02/10/017
-# Date Modified: 02/12/2017
+#!/usr/bin/env python
+# Author: Jason Song
 
 '''
 Filter rules:
-1. noise: remove all the words in 'MilestonesA Del_YinYi_XiaoSong.txt'
-2. substitution: replace words according to 'MilestonesA Sub_YinYi_XiaoSong.txt'
+1. noise: remove all the words in 'MilestonesA_noise_words.txt'
+2. substitution: replace words according to 'MilestonesA_replacement_words.txt'
 3. Verb-stem: all verbs end with 'ing, ed, s' will be replaced by the stem.
 4. Mini-words: filter out all words contain less than two characters.
 '''
+import logging
 import re
+
+logging.basicConfig(level=logging.DEBUG)
+LOG = logging.getLogger(__name__)
+
 
 NOISE_WORDS_FILEPATH = 'MilestoneA_noise_words.txt'
 REPLACEMENT_WORDS_FILEPATH = 'MilestoneA_replacement_words.txt'
 INPUT_FILEPATH = 'MilestoneA_input.txt'
-REPORT_FILEPATH = 'index.html'
-
-NOISE_WORDS_FILEPATH = 'MilestonesA Del_YinYi_XiaoSong.txt'
-REPLACEMENT_WORDS_FILEPATH = 'MilestonesA Sub_YinYi_XiaoSong.txt'
-INPUT_FILEPATH = 'MilestonesA Input_YinYi_XiaoSong.txt'
 REPORT_FILEPATH = 'index.html'
 
 
@@ -62,14 +58,19 @@ def parse_keywords(article, replacement_words, noise_words):
     Return a list of sorted unique tokens.
     '''
     article = article.lower()
+    LOG.debug('Lower article: %s', article)
     # Rule2: replace words
     for key, value in replacement_words.items():
         article = article.replace(key, value)
-    tokens = re.findall('[a-z]*', article)
+    LOG.debug('Replaced article: %s', article)
+    tokens = re.findall('[a-z]+', article)
+    LOG.debug('Tokens: %s', tokens)
     # Rule3: find out stem for verbs
     # Rule4: filter out mini words
-    tokens = [parse_stem(w) for w in tokens if len(w) > 2]
-    return list(sorted(set(tokens) - set(noise_words)))
+    keywords = [parse_stem(w) for w in tokens if len(w) > 2]
+    LOG.debug('Parsed keywords: %s', keywords)
+    # Rule1: delete noise words
+    return list(sorted(set(keywords) - set(noise_words)))
 
 REPORT_TEMPLATE = '''<!DOCTYPE html>
 <html lang="en">
@@ -109,18 +110,22 @@ def generate_report(keywords, report_filepath=REPORT_FILEPATH):
         content += REPORT_KEYWORD_TEMPLATE % keyword
     with open(report_filepath, 'w') as report_file:
         report_file.write(REPORT_TEMPLATE % content)
+        LOG.info('Report generated at %s', report_filepath)
 
 
 def main():
     '''Main function.'''
     noise_words = read_noise_words()
+    LOG.debug('Noise words: %s', noise_words)
     replacement_words = read_replacement_words()
+    LOG.debug('Replacement words: %s', replacement_words)
     with open(INPUT_FILEPATH, 'r') as input_file:
         article = input_file.read()
+    LOG.debug('Article : %s', article)
     keywords = parse_keywords(
         article=article, noise_words=noise_words, replacement_words=replacement_words)
+    LOG.info('Keywords (%s): %s', len(keywords), keywords)
     generate_report(keywords=keywords)
-    print(len(keywords))
 
 if __name__ == '__main__':
     main()
